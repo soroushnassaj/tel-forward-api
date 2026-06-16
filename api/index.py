@@ -23,7 +23,7 @@ class handler(BaseHTTPRequestHandler):
             )
 
             with client:
-                messages = client.get_messages(SOURCE, limit=10)  # sync ✔
+                messages = list(client.get_messages(SOURCE, limit=10))
 
                 client.forward_messages(
                     DEST,
