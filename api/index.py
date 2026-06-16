@@ -2,7 +2,6 @@ import os
 import json
 import asyncio
 from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 
@@ -13,44 +12,25 @@ SESSION = os.environ["SESSION"]
 SOURCE = os.environ["SOURCE_CHANNEL"]
 DEST = os.environ["DESTINATION_CHAT"]
 
-RUNNING = False
-
 
 async def run_forward():
-    global RUNNING
+    client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
-    if RUNNING:
-        return "already_running"
+    await client.start()
 
-    RUNNING = True
+    messages = await client.get_messages(SOURCE, limit=10)
 
-    try:
-        client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
-        await client.start()
+    await client.forward_messages(DEST, messages, SOURCE)
 
-        messages = await client.get_messages(SOURCE, limit=10)
-        await client.forward_messages(DEST, messages, SOURCE)
+    await client.disconnect()
 
-        await client.disconnect()
-
-        return len(messages)
-
-    finally:
-        RUNNING = False
+    return len(messages)
 
 
 class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
-            qs = parse_qs(urlparse(self.path).query)
-
-            if qs.get("run", ["0"])[0] != "1":
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(b'{"status":"ignored"}')
-                return
-
             count = asyncio.run(run_forward())
 
             self.send_response(200)
