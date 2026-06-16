@@ -13,7 +13,6 @@ SESSION = os.environ["SESSION"]
 SOURCE = os.environ["SOURCE_CHANNEL"]
 DEST = os.environ["DESTINATION_CHAT"]
 
-# جلوگیری از اجرای دوباره داخل یک request
 RUNNING = False
 
 
