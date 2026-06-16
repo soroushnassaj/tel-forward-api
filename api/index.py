@@ -16,9 +16,14 @@ def run_forward():
     client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
     with client:
-        messages = list(client.get_messages(SOURCE, limit=10))  
+        # ✅ FORCE sync execution (مهم‌ترین خط)
+        messages = client.loop.run_until_complete(
+            client.get_messages(SOURCE, limit=10)
+        )
 
-        client.forward_messages(DEST, messages, SOURCE)
+        client.loop.run_until_complete(
+            client.forward_messages(DEST, messages, SOURCE)
+        )
 
         return len(messages)
 
