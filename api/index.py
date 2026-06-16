@@ -38,7 +38,7 @@ class handler(BaseHTTPRequestHandler):
         )
 
         with client:
-            messages = client.get_messages(SOURCE, limit=10)
+            messages = client.get_messages(SOURCE, limit=10)  # sync version
 
             client.forward_messages(
                 DEST,
