@@ -16,7 +16,8 @@ def run_forward():
     client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
     with client:
-        messages = client.get_messages(SOURCE, limit=10)
+        messages = list(client.get_messages(SOURCE, limit=10))  
+
         client.forward_messages(DEST, messages, SOURCE)
 
         return len(messages)
