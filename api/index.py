@@ -16,37 +16,33 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
-            result = self.run_forward()
+            client = TelegramClient(
+                StringSession(SESSION),
+                API_ID,
+                API_HASH
+            )
+
+            with client:
+                messages = client.get_messages(SOURCE, limit=10)  # sync ✔
+
+                client.forward_messages(
+                    DEST,
+                    messages,
+                    SOURCE
+                )
+
+                count = len(messages)
 
             self.send_response(200)
             self.send_header("Content-type", "application/json")
             self.end_headers()
 
-            self.wfile.write(json.dumps(result).encode())
+            self.wfile.write(json.dumps({
+                "status": "done",
+                "count": count
+            }).encode())
 
         except Exception as e:
             self.send_response(500)
             self.end_headers()
             self.wfile.write(str(e).encode())
-
-    def run_forward(self):
-
-        client = TelegramClient(
-            StringSession(SESSION),
-            API_ID,
-            API_HASH
-        )
-
-        with client:
-            messages = client.get_messages(SOURCE, limit=10)  # sync version
-
-            client.forward_messages(
-                DEST,
-                messages,
-                SOURCE
-            )
-
-        return {
-            "status": "done",
-            "count": len(messages)
-        }
