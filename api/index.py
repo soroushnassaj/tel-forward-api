@@ -1,6 +1,5 @@
 import os
 import json
-import asyncio
 from http.server import BaseHTTPRequestHandler
 from telethon import TelegramClient
 from telethon.sessions import StringSession
@@ -13,25 +12,21 @@ SOURCE = os.environ["SOURCE_CHANNEL"]
 DEST = os.environ["DESTINATION_CHAT"]
 
 
-async def run_forward():
+def run_forward():
     client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
-    await client.start()
+    with client:
+        messages = client.get_messages(SOURCE, limit=10)
+        client.forward_messages(DEST, messages, SOURCE)
 
-    messages = await client.get_messages(SOURCE, limit=10)
-
-    await client.forward_messages(DEST, messages, SOURCE)
-
-    await client.disconnect()
-
-    return len(messages)
+        return len(messages)
 
 
 class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
-            count = asyncio.run(run_forward())
+            count = run_forward()
 
             self.send_response(200)
             self.send_header("Content-type", "application/json")
