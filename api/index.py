@@ -11,7 +11,7 @@ API_HASH = os.environ["API_HASH"]
 SESSION = os.environ["SESSION"]
 
 
-def get_messages(channel):
+def get_messages(channel, limit):
     client = TelegramClient(
         StringSession(SESSION),
         API_ID,
@@ -20,7 +20,7 @@ def get_messages(channel):
 
     with client:
         messages = client.loop.run_until_complete(
-            client.get_messages(channel, limit=10)
+            client.get_messages(channel, limit=limit)
         )
 
         result = []
@@ -31,6 +31,7 @@ def get_messages(channel):
                 "text": msg.message,
                 "date": msg.date.isoformat() if msg.date else None,
                 "views": getattr(msg, "views", None),
+                "forwards": getattr(msg, "forwards", None),
             })
 
         return result
@@ -47,23 +48,40 @@ class handler(BaseHTTPRequestHandler):
             if not channel:
                 raise Exception("channel parameter is required")
 
-            data = get_messages(channel)
+            limit = int(query.get("limit", [10])[0])
+
+            if limit < 1:
+                limit = 1
+
+            if limit > 100:
+                limit = 100
+
+            data = get_messages(channel, limit)
+
+            response = {
+                "channel": channel,
+                "count": len(data),
+                "messages": data
+            }
 
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
 
             self.wfile.write(
                 json.dumps(
-                    {
-                        "count": len(data),
-                        "messages": data
-                    },
+                    response,
                     ensure_ascii=False
                 ).encode("utf-8")
             )
 
         except Exception as e:
             self.send_response(500)
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(str(e).encode())
+
+            self.wfile.write(
+                json.dumps({
+                    "error": str(e)
+                }).encode()
+            )
