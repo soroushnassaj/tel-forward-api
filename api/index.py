@@ -29,9 +29,7 @@ def get_messages(channel, limit):
             result.append({
                 "id": msg.id,
                 "text": msg.message,
-                "date": msg.date.isoformat() if msg.date else None,
-                "views": getattr(msg, "views", None),
-                "forwards": getattr(msg, "forwards", None),
+                "date": msg.date.isoformat() if msg.date else None
             })
 
         return result
@@ -83,5 +81,5 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(
                 json.dumps({
                     "error": str(e)
-                }).encode()
+                }).encode("utf-8")
             )
